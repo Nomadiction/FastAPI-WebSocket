@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Websocket Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+</head>
+<body>
+    <div class="container mt-3">
+        <h1>FastAPI WebSocket Chat</h1>
+        <form action="" onsubmit="sendMessage(event)">
+            <h3>Your ID: <span id="ws-id"></span></h3>
+            <input type="text" class="form-control" id="messageText" autocomplete="off" />
+            <h3>Your NUM: <span id="ws-id"></span></h3>
+            <input type="text" class="form-control" id="messageText1" autocomplete="off" />
+            <button class="btn btn-outline-primary mt-2">Send</button>
+        </form>
+        <ul id='messages' class="mt-5"></ul>
+
+    </div>
+
+    <style>
+        .green-text {
+            background-color: #00ff4070;
+            color: #00ff40;
+            text-shadow: 0 0 10px #00ff40;
+        }
+
+        .red-text {
+            background-color: #ff404070;
+            color: #ff4040;
+            text-shadow: 0 0 10px #ff4040;
+            ;
+        }
+    </style>
+
+    <script>
+        var ws = new WebSocket(`ws://localhost:8000/ws`);
+        var messages = document.getElementById('messages');
+
+        // Обработчик для события приема сообщения от сервера
+        ws.onmessage = function (event) {
+            // Разбиваем сообщение на метку и текст
+            var messageParts = event.data.split('|');
+            var colorLabel = messageParts[0];
+            var messageText = messageParts[1];
+
+            // Создаем новый элемент списка для сообщения
+            var message = document.createElement('li');
+
+            // Создаем текстовое содержимое для сообщения
+            var content = document.createTextNode(messageText);
+
+            // Добавляем текстовое содержимое к элементу сообщения
+            message.appendChild(content);
+            
+            // Очищаем список сообщений
+            while (messages.firstChild) {
+                messages.removeChild(messages.firstChild);
+            }
+
+            // Применяем цвет на основе метки
+            if (colorLabel === "red") {
+                message.style.color = "red"; // Красный цвет
+            } else if (colorLabel === "green") {
+                message.style.color = "green"; // Зеленый цвет
+            }
+
+            // Добавляем новое сообщение к списку
+            messages.appendChild(message);
+        };
+
+        function sendMessage(event) {
+            var name = document.getElementById("messageText");
+            var age = document.getElementById("messageText1");
+
+            // Отправляем значение на сервер через WebSocket соединение
+            ws.send(name.value);
+            ws.send(age.value);
+
+            // Очищаем текстовое поле ввода
+            name.value = '';
+            age.value = '';
+
+            event.preventDefault();
+        }
+
+    </script>
+</body>
+
+</html>

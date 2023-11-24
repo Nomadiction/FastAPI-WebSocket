@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>METANIT.COM</title>
+    <meta charset="utf-8" />
+</head>
+
+<body>
+    <p>
+        Введите имя: <br />
+        <input name="username" id="username" />
+    </p>
+    <p>
+        Введите возраст: <br />
+        <input name="userage" id="userage" type="number" />
+    </p>
+
+    <div id="message"></div>
+
+    <output id="result"></output>
+
+    <button onclick="send(event)">Отправить</button>
+
+    <style>
+        .green-text {
+            background-color: #00ff4070;
+            color: #00ff40;
+            text-shadow: 0 0 10px #00ff40;
+        }
+
+        .red-text {
+            background-color: #ff404070;
+            color: #ff4040;
+            text-shadow: 0 0 10px #ff4040;
+            ;
+        }
+    </style>
+
+    <script>
+        async function send(event) {
+            try {
+                // получаем введеные в поля имя и возраст
+                const username = document.getElementById("username").value;
+                const userage = document.getElementById("userage").value;
+
+                // отправляем запрос
+                const response = await fetch("/data", {
+                    method: "POST",
+                    headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        name: username,
+                        age: userage
+                    })
+                });
+
+                event.preventDefault();
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById("message").textContent = data.message;
+
+                    //вызов функции вебсокета для передачи собранной инфы
+                    get(data.message);
+                } else {
+                    console.log(response);
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                resultText.textContent = "Error sending data";
+            }
+        }
+
+        var ws = new WebSocket(`ws://localhost:5000/websocket`);
+        var messages = document.getElementById('result');
+
+        // Обработчик для события приема сообщения от сервера
+        ws.onmessage = function (event) {
+            // Разбиваем сообщение на метку и текст
+            var messageParts = event.data.split('|');
+            var colorLabel = messageParts[0];
+            var messageText = messageParts[1];
+
+            // создаем новый элемент списка для сообщения
+            var message = document.createElement('li');
+            var content = document.createTextNode(messageText);
+
+            // добавляем текстовое содержимое к элементу сообщения
+            message.appendChild(content);
+
+            // обновляем список сообщений
+            while (messages.firstChild) {
+                messages.removeChild(messages.firstChild);
+            }
+
+            // Применяем цвет на основе метки
+            if (colorLabel === "red") {
+                message.style.color = "red"; // Красный цвет
+            } else if (colorLabel === "green") {
+                message.style.color = "green"; // Зеленый цвет
+            }
+
+            // добавляем новое сообщение к списку
+            messages.appendChild(message);
+        };
+
+        // функцию надо вызывать не по нжатию кнопки, а в тот момент когда происходит получение data.message и передавать дату
+        function get(message) {
+            var data = document.getElementById("message");
+
+            // Отправляем значение на сервер через WebSocket соединение
+            ws.send(data.value);
+
+            event.preventDefault();
+        }
+
+
+    </script>
+</body>
+
+</html>
